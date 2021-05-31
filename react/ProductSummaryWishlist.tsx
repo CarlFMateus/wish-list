@@ -46,6 +46,7 @@ const ProductSummaryList: FC = ({ children }) => {
   const { treePath } = useTreePath()
   const { navigate, history } = useRuntime()
   const handles = useCssHandles(CSS_HANDLES)
+  let listProducts: any[] = [];
 
   const sessionResponse: any = useSessionResponse()
 
@@ -90,6 +91,7 @@ const ProductSummaryList: FC = ({ children }) => {
     })
 
     localStore.setItem('wishlist_wishlisted', JSON.stringify(ids))
+    listProducts = new Array(ids.length);
     loadProducts({
       variables: {
         ids,
@@ -107,11 +109,25 @@ const ProductSummaryList: FC = ({ children }) => {
         return itemId === id
       })?.id
     }
-    const componentList = products?.map((product: any) => {
+
+    products?.map((product: any) => {
       const normalizedProduct = mapCatalogProductToProductSummary(
         product,
         getWishlistId(product.productId)
       )
+
+      const indexProduct = dataLists?.viewLists[0]?.data.findIndex((item: any) => item.productId === product.productId)
+      if (indexProduct !== -1) {
+        listProducts[indexProduct] = (
+          <ExtensionPoint
+            id="product-summary"
+            key={product.id}
+            treePath={treePath}
+            product={normalizedProduct}
+          />
+        )
+      }
+
       return (
         <ExtensionPoint
           id="product-summary"
@@ -121,7 +137,8 @@ const ProductSummaryList: FC = ({ children }) => {
         />
       )
     })
-    return list.concat(componentList)
+
+    return list.concat(listProducts)
   }, [products, treePath, list, dataLists])
 
   if (sessionResponse && !isAuthenticated) {
